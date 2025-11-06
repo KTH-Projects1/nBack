@@ -1,5 +1,6 @@
 package mobappdev.example.nback_cimpl.ui.viewmodels
 
+import GameApplication
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -13,11 +14,16 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import mobappdev.example.nback_cimpl.GameApplication
 import mobappdev.example.nback_cimpl.data.GameRepository
+import mobappdev.example.nback_cimpl.data.GameSettings
 import mobappdev.example.nback_cimpl.data.GameState
 import mobappdev.example.nback_cimpl.data.GameType
 
+/**
+ * ViewModel for the N-Back game
+ * Manages UI-related data and business logic
+ * Now uses GameSettings from SettingsRepository
+ */
 class GameVM(
     private val repository: GameRepository
 ) : ViewModel() {
@@ -31,11 +37,9 @@ class GameVM(
     private val _highscore = MutableStateFlow(0)
     val highscore: StateFlow<Int> = _highscore.asStateFlow()
 
-    val nBack: Int = 2
-    private val eventInterval: Long = 2000L
-    private val numberOfEvents: Int = 20
-    private val gridSize: Int = 3
-    private val numberOfLetters: Int = 8
+    // Settings - now from repository instead of hardcoded
+    private val _settings = MutableStateFlow(GameSettings())
+    val settings: StateFlow<GameSettings> = _settings.asStateFlow()
 
     private var visualSequence = intArrayOf()
     private var audioSequence = arrayOf<String>()
@@ -46,9 +50,18 @@ class GameVM(
     private var totalResponses = 0
 
     init {
+        // Observe high score
         viewModelScope.launch {
             repository.getHighScore().collect { highScore ->
                 _highscore.value = highScore
+            }
+        }
+
+        // Observe settings
+        viewModelScope.launch {
+            repository.getSettings().collect { gameSettings ->
+                _settings.value = gameSettings
+                Log.d("GameVM", "Settings updated: $gameSettings")
             }
         }
     }
@@ -61,37 +74,39 @@ class GameVM(
         gameJob?.cancel()
         resetGameState()
 
+        val currentSettings = _settings.value
+
         when (_gameState.value.gameType) {
             GameType.Visual -> {
                 visualSequence = repository.generateVisualSequence(
-                    size = numberOfEvents,
-                    gridSize = gridSize,
+                    size = currentSettings.numberOfEvents,
+                    gridSize = currentSettings.gridSize,
                     percentMatch = 30,
-                    nBack = nBack
+                    nBack = currentSettings.nValue
                 )
                 Log.d("GameVM", "Visual sequence: ${visualSequence.contentToString()}")
             }
             GameType.Audio -> {
                 audioSequence = repository.generateAudioSequence(
-                    size = numberOfEvents,
-                    numberOfLetters = numberOfLetters,
+                    size = currentSettings.numberOfEvents,
+                    numberOfLetters = currentSettings.numberOfLetters,
                     percentMatch = 30,
-                    nBack = nBack
+                    nBack = currentSettings.nValue
                 )
                 Log.d("GameVM", "Audio sequence: ${audioSequence.contentToString()}")
             }
             GameType.AudioVisual -> {
                 visualSequence = repository.generateVisualSequence(
-                    size = numberOfEvents,
-                    gridSize = gridSize,
+                    size = currentSettings.numberOfEvents,
+                    gridSize = currentSettings.gridSize,
                     percentMatch = 30,
-                    nBack = nBack
+                    nBack = currentSettings.nValue
                 )
                 audioSequence = repository.generateAudioSequence(
-                    size = numberOfEvents,
-                    numberOfLetters = numberOfLetters,
+                    size = currentSettings.numberOfEvents,
+                    numberOfLetters = currentSettings.numberOfLetters,
                     percentMatch = 30,
-                    nBack = nBack
+                    nBack = currentSettings.nValue
                 )
                 Log.d("GameVM", "Dual sequences generated")
             }
@@ -99,7 +114,7 @@ class GameVM(
 
         _gameState.value = _gameState.value.copy(
             isGameRunning = true,
-            totalEvents = numberOfEvents,
+            totalEvents = currentSettings.numberOfEvents,
             currentIndex = 0
         )
 
@@ -108,6 +123,7 @@ class GameVM(
 
     fun checkMatch() {
         val currentIndex = _gameState.value.currentIndex
+        val nBack = _settings.value.nValue
 
         if (currentIndex < nBack) {
             Log.d("GameVM", "Too early to check match")
@@ -127,14 +143,17 @@ class GameVM(
         when (_gameState.value.gameType) {
             GameType.Visual -> {
                 isCorrect = repository.isMatch(visualSequence, currentIndex, nBack)
+                Log.d("GameVM", "Visual match: $isCorrect")
             }
             GameType.Audio -> {
                 isCorrect = audioSequence[currentIndex] == audioSequence[currentIndex - nBack]
+                Log.d("GameVM", "Audio match: $isCorrect")
             }
             GameType.AudioVisual -> {
                 val visualMatch = repository.isMatch(visualSequence, currentIndex, nBack)
                 val audioMatch = audioSequence[currentIndex] == audioSequence[currentIndex - nBack]
                 isCorrect = visualMatch || audioMatch
+                Log.d("GameVM", "Dual match: $isCorrect (V:$visualMatch, A:$audioMatch)")
             }
         }
 
@@ -149,8 +168,10 @@ class GameVM(
     }
 
     private fun startGameLoop() {
+        val currentSettings = _settings.value
+
         gameJob = viewModelScope.launch {
-            for (index in 0 until numberOfEvents) {
+            for (index in 0 until currentSettings.numberOfEvents) {
                 _gameState.value = _gameState.value.copy(
                     currentIndex = index,
                     eventValue = if (_gameState.value.gameType != GameType.Audio) {
@@ -159,11 +180,11 @@ class GameVM(
                     audioValue = if (_gameState.value.gameType != GameType.Visual) {
                         audioSequence[index]
                     } else null,
-                    canRespond = index >= nBack,
+                    canRespond = index >= currentSettings.nValue,
                     lastResponseCorrect = null
                 )
 
-                delay(eventInterval)
+                delay(currentSettings.eventInterval)
             }
 
             endGame()
@@ -178,6 +199,8 @@ class GameVM(
                 repository.saveHighScore(_score.value)
             }
         }
+
+        Log.d("GameVM", "Game ended - Score: ${_score.value}")
     }
 
     private fun resetGameState() {
@@ -186,6 +209,13 @@ class GameVM(
         totalResponses = 0
         _score.value = 0
         _gameState.value = GameState(gameType = _gameState.value.gameType)
+    }
+
+    fun updateSettings(newSettings: GameSettings) {
+        viewModelScope.launch {
+            repository.saveSettings(newSettings)
+            Log.d("GameVM", "Settings saved: $newSettings")
+        }
     }
 
     override fun onCleared() {
@@ -198,7 +228,10 @@ class GameVM(
             initializer {
                 val application = (this[APPLICATION_KEY] as GameApplication)
                 GameVM(
-                    repository = GameRepository(application.userPreferencesRespository)
+                    repository = GameRepository(
+                        userPreferencesRepository = application.userPreferencesRespository,
+                        settingsRepository = application.settingsRepository
+                    )
                 )
             }
         }

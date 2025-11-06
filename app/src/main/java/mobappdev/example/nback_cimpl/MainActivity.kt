@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -13,6 +15,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import mobappdev.example.nback_cimpl.ui.screens.GameScreen
 import mobappdev.example.nback_cimpl.ui.screens.HomeScreen
+import mobappdev.example.nback_cimpl.ui.screens.SettingsScreen
 import mobappdev.example.nback_cimpl.ui.theme.NBack_CImplTheme
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameVM
 
@@ -28,6 +31,9 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     val gameViewModel: GameVM = viewModel(factory = GameVM.Factory)
 
+                    // Observe settings
+                    val currentSettings by gameViewModel.settings.collectAsState()
+
                     NavHost(
                         navController = navController,
                         startDestination = "home"
@@ -35,12 +41,24 @@ class MainActivity : ComponentActivity() {
                         composable("home") {
                             HomeScreen(
                                 vm = gameViewModel,
-                                onNavigateToGame = { navController.navigate("game") }
+                                onNavigateToGame = { navController.navigate("game") },
+                                onNavigateToSettings = { navController.navigate("settings") }
                             )
                         }
+
                         composable("game") {
                             GameScreen(
                                 vm = gameViewModel,
+                                onNavigateBack = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable("settings") {
+                            SettingsScreen(
+                                currentSettings = currentSettings,
+                                onSettingsChanged = { newSettings ->
+                                    gameViewModel.updateSettings(newSettings)
+                                },
                                 onNavigateBack = { navController.popBackStack() }
                             )
                         }

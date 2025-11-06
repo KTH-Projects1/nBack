@@ -25,6 +25,7 @@ fun GameScreen(
     onNavigateBack: () -> Unit
 ) {
     val gameState by vm.gameState.collectAsState()
+    val settings by vm.settings.collectAsState()
     val score by vm.score.collectAsState()
     val scope = rememberCoroutineScope()
 
@@ -40,7 +41,7 @@ fun GameScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("N-Back Game (N=${vm.nBack})") },
+                title = { Text("N-Back Game (N=${settings.nValue})") },
                 navigationIcon = {
                     TextButton(onClick = onNavigateBack) {
                         Text("← Back")

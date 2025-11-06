@@ -2,12 +2,9 @@ package mobappdev.example.nback_cimpl.data
 
 import mobappdev.example.nback_cimpl.NBackHelper
 
-/**
- * Repository for game data
- * Part of the Model layer in MVVM
- */
 class GameRepository(
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val settingsRepository: SettingsRepository
 ) {
     private val nBackHelper = NBackHelper()
 
@@ -47,4 +44,11 @@ class GameRepository(
     }
 
     fun getHighScore() = userPreferencesRepository.highscore
+
+    // Settings
+    fun getSettings() = settingsRepository.gameSettings
+
+    suspend fun saveSettings(settings: GameSettings) {
+        settingsRepository.saveSettings(settings)
+    }
 }

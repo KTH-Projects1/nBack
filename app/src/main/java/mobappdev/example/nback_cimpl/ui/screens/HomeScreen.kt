@@ -1,6 +1,8 @@
 package mobappdev.example.nback_cimpl.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -12,15 +14,35 @@ import mobappdev.example.nback_cimpl.R
 import mobappdev.example.nback_cimpl.data.GameType
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameVM
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
     vm: GameVM,
-    onNavigateToGame: () -> Unit
+    onNavigateToGame: () -> Unit,
+    onNavigateToSettings: () -> Unit
 ) {
     val highscore by vm.highscore.collectAsState()
     val gameState by vm.gameState.collectAsState()
+    val settings by vm.settings.collectAsState()
 
-    Scaffold { padding ->
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("N-Back Memory Game") },
+                actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
+            )
+        }
+    ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -31,20 +53,13 @@ fun HomeScreen(
         ) {
             // Title
             Text(
-                text = "N-Back Memory Game",
-                style = MaterialTheme.typography.displayMedium,
+                text = "Test Your Working Memory",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = "Test Your Working Memory",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Spacer(modifier = Modifier.height(48.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // High Score Card
             Card(
@@ -70,9 +85,9 @@ fun HomeScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Settings Info
+            // Current Settings Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -82,21 +97,40 @@ fun HomeScreen(
                 Column(
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Text(
-                        text = "Current Settings",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Current Settings",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        TextButton(onClick = onNavigateToSettings) {
+                            Text("Change")
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
+
                     Text(
                         text = "• Mode: ${gameState.gameType.name}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "• N-Back Level: ${vm.nBack}",
+                        text = "• N-Back Level: ${settings.nValue}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = "• Grid Size: 3×3",
+                        text = "• Events per Round: ${settings.numberOfEvents}",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "• Time Between Events: ${settings.intervalSeconds}s",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = "• Grid Size: ${settings.gridDimensions}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
@@ -163,7 +197,7 @@ fun HomeScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text("Visual", style = MaterialTheme.typography.titleMedium)
-                        Text("3×3 Grid", style = MaterialTheme.typography.bodySmall)
+                        Text("${settings.gridDimensions} Grid", style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
