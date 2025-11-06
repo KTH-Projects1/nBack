@@ -10,6 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import mobappdev.example.nback_cimpl.data.GameSettings
 import kotlin.math.roundToInt
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,7 +20,7 @@ fun SettingsScreen(
     onSettingsChanged: (GameSettings) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    // FIXED: Using mutableStateOf instead of mutableIntStateOf/mutableFloatStateOf
+
     var nValue by remember { mutableStateOf(currentSettings.nValue) }
     var numberOfEvents by remember { mutableStateOf(currentSettings.numberOfEvents) }
     var eventInterval by remember { mutableStateOf(currentSettings.intervalSeconds) }
@@ -55,10 +57,11 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Header Card
+
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.cardColors(
@@ -81,7 +84,7 @@ fun SettingsScreen(
                 }
             }
 
-            // N-Back Level Slider
+
             SettingSlider(
                 title = "N-Back Level",
                 description = "How many steps back to remember",
@@ -92,7 +95,7 @@ fun SettingsScreen(
                 valueLabel = "N = $nValue"
             )
 
-            // Number of Events Slider
+
             SettingSlider(
                 title = "Number of Events",
                 description = "Total events per game round",
@@ -103,7 +106,7 @@ fun SettingsScreen(
                 valueLabel = "$numberOfEvents events"
             )
 
-            // Event Interval Slider
+
             SettingSlider(
                 title = "Time Between Events",
                 description = "Delay between each stimulus",
@@ -114,7 +117,7 @@ fun SettingsScreen(
                 valueLabel = "${String.format("%.1f", eventInterval)}s"
             )
 
-            // Grid Size Slider
+
             SettingSlider(
                 title = "Visual Grid Size",
                 description = "Size of the position grid",
@@ -125,7 +128,6 @@ fun SettingsScreen(
                 valueLabel = "${gridSize}×${gridSize} grid"
             )
 
-            // Number of Letters Slider - FIXED
             SettingSlider(
                 title = "Audio Letters",
                 description = "Number of letters to use",
@@ -136,9 +138,8 @@ fun SettingsScreen(
                 valueLabel = "$numberOfLetters letters (A-${('A' + numberOfLetters - 1)})"
             )
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(24.dp))
 
-            // Info text
             Text(
                 text = "💡 Tip: Higher N-back levels and more letters make the game harder!",
                 style = MaterialTheme.typography.bodySmall,

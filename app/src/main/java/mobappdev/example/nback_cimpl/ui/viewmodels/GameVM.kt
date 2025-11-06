@@ -1,6 +1,6 @@
 package mobappdev.example.nback_cimpl.ui.viewmodels
 
-import GameApplication
+import mobappdev.example.nback_cimpl.GameApplication
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -19,11 +19,7 @@ import mobappdev.example.nback_cimpl.data.GameSettings
 import mobappdev.example.nback_cimpl.data.GameState
 import mobappdev.example.nback_cimpl.data.GameType
 
-/**
- * ViewModel for the N-Back game
- * Manages UI-related data and business logic
- * Now uses GameSettings from SettingsRepository
- */
+
 class GameVM(
     private val repository: GameRepository
 ) : ViewModel() {
@@ -37,7 +33,6 @@ class GameVM(
     private val _highscore = MutableStateFlow(0)
     val highscore: StateFlow<Int> = _highscore.asStateFlow()
 
-    // Settings - now from repository instead of hardcoded
     private val _settings = MutableStateFlow(GameSettings())
     val settings: StateFlow<GameSettings> = _settings.asStateFlow()
 
@@ -50,14 +45,14 @@ class GameVM(
     private var totalResponses = 0
 
     init {
-        // Observe high score
+
         viewModelScope.launch {
             repository.getHighScore().collect { highScore ->
                 _highscore.value = highScore
             }
         }
 
-        // Observe settings
+
         viewModelScope.launch {
             repository.getSettings().collect { gameSettings ->
                 _settings.value = gameSettings

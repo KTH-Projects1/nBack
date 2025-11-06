@@ -117,7 +117,7 @@ fun GameScreen(
                 when (gameState.gameType) {
                     GameType.Visual -> {
                         VisualGrid(
-                            gridSize = 3,
+                            gridSize = settings.gridSize,
                             highlightedPosition = gameState.eventValue,
                             modifier = Modifier.fillMaxSize(0.85f)
                         )
@@ -134,7 +134,7 @@ fun GameScreen(
                             verticalArrangement = Arrangement.spacedBy(24.dp)
                         ) {
                             VisualGrid(
-                                gridSize = 3,
+                                gridSize = settings.gridSize,
                                 highlightedPosition = gameState.eventValue,
                                 modifier = Modifier
                                     .fillMaxWidth(0.7f)

@@ -7,11 +7,11 @@ data class GameSettings(
     val gridSize: Int = 3,                   // Grid size for visual mode (3-5)
     val numberOfLetters: Int = 8             // Number of letters for audio mode (6-10)
 ) {
-    // Helper to display interval in seconds
+
     val intervalSeconds: Float
         get() = eventInterval / 1000f
 
-    // Helper to display grid dimensions
+
     val gridDimensions: String
         get() = "${gridSize}×${gridSize}"
 }

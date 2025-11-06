@@ -133,12 +133,16 @@ fun HomeScreen(
                         text = "• Grid Size: ${settings.gridDimensions}",
                         style = MaterialTheme.typography.bodyMedium
                     )
+                    Text(
+                        text = "• Audio Letters: ${settings.numberOfLetters} (A-${('A' + settings.numberOfLetters - 1)})",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Game Mode Selection
+
             Text(
                 text = "Select Game Mode",
                 style = MaterialTheme.typography.headlineSmall
@@ -146,7 +150,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Audio and Visual Buttons
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -204,7 +208,7 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Dual Mode Button
+
             FilledTonalButton(
                 onClick = {
                     vm.setGameType(GameType.AudioVisual)
