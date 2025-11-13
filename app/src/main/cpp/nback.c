@@ -122,7 +122,7 @@ void fillInAllEmpty(int nBackString[], int size, int combinations, int nback){
                 // If both foo and bar flags are 1, it means the value is different
                 // from the previous and next n-back elements, so we can fill in the
                 // current element
-                if(foo == 1 && bar == 1){
+                if(foo == 1 && bar == 1){ // Kollar om det nya värdet är "säkert" (dvs. *inte* matchar varken framåt eller bakåt).
                     test = 1;  // Set the test flag to exit the loop
                     nBackString[i] = value;  // Fill in the value in the current empty element
                 }

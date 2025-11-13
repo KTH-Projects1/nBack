@@ -16,6 +16,7 @@ class GameRepository(
     ): IntArray {
         val combinations = gridSize * gridSize
         return nBackHelper.generateNBackString(size, combinations, percentMatch, nBack)
+        // Repositoryn vet *hur* datan skapas (via NBackHelper) och döljer det från VM:n.
     }
 
     fun generateAudioSequence(
@@ -44,6 +45,7 @@ class GameRepository(
     }
 
     fun getHighScore() = userPreferencesRepository.highscore
+    // GameRepo agerar "mellanhand" (delegerar) för att hämta highscore från sin specialiserade repo.
 
     // Settings
     fun getSettings() = settingsRepository.gameSettings

@@ -21,7 +21,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
 
-    var nValue by remember { mutableStateOf(currentSettings.nValue) }
+    var nValue by remember { mutableStateOf(currentSettings.nValue) }// Använder `remember` för att hålla sliderns värde *temporärt* i minnet (UI state).
     var numberOfEvents by remember { mutableStateOf(currentSettings.numberOfEvents) }
     var eventInterval by remember { mutableStateOf(currentSettings.intervalSeconds) }
     var gridSize by remember { mutableStateOf(currentSettings.gridSize) }
@@ -31,9 +31,8 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Settings") },
-                navigationIcon = {
+                navigationIcon = { // I TopAppBar, när användaren går tillbaka
                     IconButton(onClick = {
-                        // Save settings before going back
                         val newSettings = GameSettings(
                             nValue = nValue,
                             numberOfEvents = numberOfEvents,
@@ -41,7 +40,7 @@ fun SettingsScreen(
                             gridSize = gridSize,
                             numberOfLetters = numberOfLetters
                         )
-                        onSettingsChanged(newSettings)
+                        onSettingsChanged(newSettings) // skapas nya inställningar och skickas till VM:n via denna callback.
                         onNavigateBack()
                     }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")

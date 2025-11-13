@@ -31,7 +31,7 @@ fun GameScreen(
 
     val buttonScale = remember { Animatable(1f) }
 
-    LaunchedEffect(gameState.lastResponseCorrect) {
+    LaunchedEffect(gameState.lastResponseCorrect) { // Feedback 2 (Animation): Denna effekt körs *bara* när `lastResponseCorrect` ändras.
         gameState.lastResponseCorrect?.let {
             buttonScale.animateTo(1.2f, animationSpec = tween(100))
             buttonScale.animateTo(1f, animationSpec = tween(100))
@@ -128,7 +128,7 @@ fun GameScreen(
                             modifier = Modifier.size(250.dp)
                         )
                     }
-                    GameType.AudioVisual -> {
+                    GameType.AudioVisual -> { // I `GameScreen`, om GameType är AudioVisual, ritar vi ut *båda* composables (Grid + Ljud).
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(24.dp)
@@ -170,6 +170,7 @@ fun GameScreen(
                         true -> Color(0xFF4CAF50)
                         false -> Color(0xFFF44336)
                         null -> MaterialTheme.colorScheme.primary
+                        // Feedback 1 (Färg): `when`-satsen ändrar knappens färg (grön/röd) baserat på statet.
                     }
                 )
             ) {
@@ -218,18 +219,19 @@ fun VisualGrid(
     ) {
         for (row in 0 until gridSize) {
             Row(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f), // `weight(1f)` gör att alla celler och rader delar lika på utrymmet (responsivt).
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 for (col in 0 until gridSize) {
-                    val position = row * gridSize + col
+                    val position = row * gridSize + col // Räknar ut det "platta" indexet (0-8) från rad- och kolumn-looparna.
                     val isHighlighted = position == highlightedPosition
+                    // Jämför cellens index med det aktiva indexet från gameState.
 
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .background(
+                            .background( // Styr färgen på Box-composablen baserat på om den ska vara markerad.
                                 color = if (isHighlighted) {
                                     Color(0xFF2196F3)
                                 } else {

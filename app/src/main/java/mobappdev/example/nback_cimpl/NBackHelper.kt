@@ -18,6 +18,7 @@ class NBackHelper {
 
     // Native function declaration (calls the C function)
     private external fun createNBackString(size: Int, combinations: Int, percentMatch: Int, nBack: Int): IntArray
+    // 3. `external` talar om för Kotlin att denna funktions implementation finns i C/JNI.
 
     fun generateNBackString(size: Int, combinations: Int, percentMatch: Int, nBack: Int): IntArray {
         return createNBackString(size, combinations, percentMatch, nBack)
@@ -26,6 +27,7 @@ class NBackHelper {
     companion object {
         init {
             System.loadLibrary("JniBridge") // Load the native C library
+            // 3. Laddar in det kompilerade C-biblioteket (libJniBridge.so) när klassen startas.
         }
     }
 }

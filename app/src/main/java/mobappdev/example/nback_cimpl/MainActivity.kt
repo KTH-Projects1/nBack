@@ -30,6 +30,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val navController = rememberNavController()
                     val gameViewModel: GameVM = viewModel(factory = GameVM.Factory)
+                    // `viewModel()`-funktionen ser till att vi får *samma* VM-instans även efter skärmrotation.
 
                     // Observe settings
                     val currentSettings by gameViewModel.settings.collectAsState()

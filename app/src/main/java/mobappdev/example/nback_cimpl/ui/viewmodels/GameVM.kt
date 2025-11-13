@@ -24,8 +24,8 @@ class GameVM(
     private val repository: GameRepository
 ) : ViewModel() {
 
-    private val _gameState = MutableStateFlow(GameState())
-    val gameState: StateFlow<GameState> = _gameState.asStateFlow()
+    private val _gameState = MutableStateFlow(GameState()) // Privat & Muterbar (föränderlig): *Endast* VM:n kan ändra detta state.
+    val gameState: StateFlow<GameState> = _gameState.asStateFlow() // Publik & Oföränderlig (read-only): Exponerar statet till Vyn (t.ex. GameScreen) för observation.
 
     private val _score = MutableStateFlow(0)
     val score: StateFlow<Int> = _score.asStateFlow()
@@ -73,7 +73,7 @@ class GameVM(
 
         when (_gameState.value.gameType) {
             GameType.Visual -> {
-                visualSequence = repository.generateVisualSequence(
+                visualSequence = repository.generateVisualSequence( // VM:n ber Repositoryn om data, utan att veta *hur* den skapas.
                     size = currentSettings.numberOfEvents,
                     gridSize = currentSettings.gridSize,
                     percentMatch = 30,
@@ -90,7 +90,7 @@ class GameVM(
                 )
                 Log.d("GameVM", "Audio sequence: ${audioSequence.contentToString()}")
             }
-            GameType.AudioVisual -> {
+            GameType.AudioVisual -> {  // I `startGame`, om GameType är AudioVisual, genererar vi *båda* sekvenserna.
                 visualSequence = repository.generateVisualSequence(
                     size = currentSettings.numberOfEvents,
                     gridSize = currentSettings.gridSize,
@@ -147,7 +147,7 @@ class GameVM(
             GameType.AudioVisual -> {
                 val visualMatch = repository.isMatch(visualSequence, currentIndex, nBack)
                 val audioMatch = audioSequence[currentIndex] == audioSequence[currentIndex - nBack]
-                isCorrect = visualMatch || audioMatch
+                isCorrect = visualMatch || audioMatch // I `checkMatch` är gissningen korrekt om *antingen* visuell *eller* ljud-match stämmer.
                 Log.d("GameVM", "Dual match: $isCorrect (V:$visualMatch, A:$audioMatch)")
             }
         }
@@ -165,9 +165,9 @@ class GameVM(
     private fun startGameLoop() {
         val currentSettings = _settings.value
 
-        gameJob = viewModelScope.launch {
+        gameJob = viewModelScope.launch { // `viewModelScope` är bundet till VM:ns livscykel, inte Vyns. Denna coroutine överlever rotation.
             for (index in 0 until currentSettings.numberOfEvents) {
-                _gameState.value = _gameState.value.copy(
+                _gameState.value = _gameState.value.copy( // Uppdaterar spelets "state" med det nya eventet (vilken ruta/ljud som visas).
                     currentIndex = index,
                     eventValue = if (_gameState.value.gameType != GameType.Audio) {
                         visualSequence[index]
@@ -179,7 +179,7 @@ class GameVM(
                     lastResponseCorrect = null
                 )
 
-                delay(currentSettings.eventInterval)
+                delay(currentSettings.eventInterval) // Pausar coroutinen (spelloopen) asynkront enligt användarens inställning (t.ex. 2 sek).
             }
 
             endGame()
@@ -206,8 +206,9 @@ class GameVM(
         _gameState.value = GameState(gameType = _gameState.value.gameType)
     }
 
-    fun updateSettings(newSettings: GameSettings) {
+    fun updateSettings(newSettings: GameSettings) { // VM:n tar emot de nya inställningarna och startar en coroutine för att spara dem.
         viewModelScope.launch {
+            // VM:n ber Repositoryn att *permanent* spara (persistera) inställningarna (till DataStore).
             repository.saveSettings(newSettings)
             Log.d("GameVM", "Settings saved: $newSettings")
         }
@@ -226,6 +227,7 @@ class GameVM(
                     repository = GameRepository(
                         userPreferencesRepository = application.userPreferencesRespository,
                         settingsRepository = application.settingsRepository
+                        // "Dependency Injection": Vi *ger* GameRepository sina beroenden (andra repos) när den skapas.
                     )
                 )
             }
