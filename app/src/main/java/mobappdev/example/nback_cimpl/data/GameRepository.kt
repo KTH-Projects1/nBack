@@ -41,7 +41,7 @@ class GameRepository(
     }
 
     suspend fun saveHighScore(score: Int) {
-        userPreferencesRepository.saveHighScore(score)
+        userPreferencesRepository.saveHighScore(score) // 3. (Model/Repo) Repositoryn delegerar anropet till rätt datakälla.
     }
 
     fun getHighScore() = userPreferencesRepository.highscore

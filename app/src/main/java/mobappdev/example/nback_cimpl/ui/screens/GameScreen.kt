@@ -153,7 +153,7 @@ fun GameScreen(
 
             // Match Button
             Button(
-                onClick = {
+                onClick = { // 1. (View) UI:t skickar en "event" (händelse) till ViewModel:n.
                     vm.checkMatch()
                     scope.launch {
                         buttonScale.animateTo(1.15f, animationSpec = tween(80))

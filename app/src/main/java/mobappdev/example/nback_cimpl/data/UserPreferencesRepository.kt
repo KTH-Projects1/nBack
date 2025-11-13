@@ -49,7 +49,7 @@ class UserPreferencesRepository (
 
     suspend fun saveHighScore(score: Int) {
         dataStore.edit { preferences ->
-            preferences[HIGHSCORE] = score
+            preferences[HIGHSCORE] = score // 4. (Data Source) Datakällan utför den faktiska I/O-operationen (spara till disk).
         }
     }
 }

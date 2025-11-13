@@ -27,24 +27,24 @@ class GameVM(
     private val _gameState = MutableStateFlow(GameState()) // Privat & Muterbar (föränderlig): *Endast* VM:n kan ändra detta state.
     val gameState: StateFlow<GameState> = _gameState.asStateFlow() // Publik & Oföränderlig (read-only): Exponerar statet till Vyn (t.ex. GameScreen) för observation.
 
-    private val _score = MutableStateFlow(0)
+    private val _score = MutableStateFlow(0) // Logik: Håller den nuvarande poängen för denna omgång.
     val score: StateFlow<Int> = _score.asStateFlow()
 
-    private val _highscore = MutableStateFlow(0)
+    private val _highscore = MutableStateFlow(0) // Logik: Håller det högsta sparade poängvärdet.
     val highscore: StateFlow<Int> = _highscore.asStateFlow()
 
-    private val _settings = MutableStateFlow(GameSettings())
+    private val _settings = MutableStateFlow(GameSettings()) // Logik: Håller de nuvarande inställningarna (N-värde, hastighet, etc.).
     val settings: StateFlow<GameSettings> = _settings.asStateFlow()
 
-    private var visualSequence = intArrayOf()
+    private var visualSequence = intArrayOf() // Logik: Tomma arrayer som kommer hålla stimuli-sekvenserna (siffror/bokstäver) från C-koden.
     private var audioSequence = arrayOf<String>()
     private var gameJob: Job? = null
 
-    private val respondedEvents = mutableSetOf<Int>()
+    private val respondedEvents = mutableSetOf<Int>() // Logik: Ett Set för att logga vilka events användaren redan svarat på (förhindrar dubbelsvar).
     private var correctResponses = 0
     private var totalResponses = 0
 
-    init {
+    init { // Logik: Detta körs *en* gång, direkt när GameVM skapas.
 
         viewModelScope.launch {
             repository.getHighScore().collect { highScore ->
@@ -106,7 +106,7 @@ class GameVM(
                 Log.d("GameVM", "Dual sequences generated")
             }
         }
-
+        // Logik: Uppdatera statet för att tala om för UI:t att spelet nu är igång!
         _gameState.value = _gameState.value.copy(
             isGameRunning = true,
             totalEvents = currentSettings.numberOfEvents,
@@ -130,13 +130,13 @@ class GameVM(
             return
         }
 
-        respondedEvents.add(currentIndex)
+        respondedEvents.add(currentIndex) // Logik: Registrera att användaren nu svarat på detta event.
         totalResponses++
 
         var isCorrect = false
 
         when (_gameState.value.gameType) {
-            GameType.Visual -> {
+            GameType.Visual -> { // Logik: Jämför event[nu] med event[nu - N].
                 isCorrect = repository.isMatch(visualSequence, currentIndex, nBack)
                 Log.d("GameVM", "Visual match: $isCorrect")
             }
@@ -154,10 +154,10 @@ class GameVM(
 
         if (isCorrect) {
             correctResponses++
-            _score.value++
+            _score.value++ // Uppdatera poäng-statet
         }
 
-        _gameState.value = _gameState.value.copy(
+        _gameState.value = _gameState.value.copy( // Logik: Uppdatera statet så UI:t vet om svaret var rätt (för grön/röd färg-feedback).
             lastResponseCorrect = isCorrect
         )
     }
@@ -189,9 +189,9 @@ class GameVM(
     private fun endGame() {
         _gameState.value = _gameState.value.copy(isGameRunning = false)
 
-        viewModelScope.launch {
+        viewModelScope.launch { // Logik: Starta en separat "fire-and-forget"-coroutine för att spara highscore
             if (_score.value > _highscore.value) {
-                repository.saveHighScore(_score.value)
+                repository.saveHighScore(_score.value) // 2. (ViewModel) VM:n har logiken och ber Repositoryn att spara datan.
             }
         }
 
@@ -215,7 +215,7 @@ class GameVM(
     }
 
     override fun onCleared() {
-        super.onCleared()
+        super.onCleared() // Logik (Städning): När VM:n förstörs (appen stängs), avbryt spelloopen.
         gameJob?.cancel()
     }
 
@@ -223,7 +223,7 @@ class GameVM(
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
                 val application = (this[APPLICATION_KEY] as GameApplication)
-                GameVM(
+                GameVM( // Logik: Hämta Application-kontexten.
                     repository = GameRepository(
                         userPreferencesRepository = application.userPreferencesRespository,
                         settingsRepository = application.settingsRepository
