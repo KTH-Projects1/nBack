@@ -8,6 +8,9 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import android.content.Context
+import android.speech.tts.TextToSpeech
+import java.util.Locale
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +26,8 @@ import mobappdev.example.nback_cimpl.data.GameType
 class GameVM(
     private val repository: GameRepository
 ) : ViewModel() {
+
+    private var textToSpeech: TextToSpeech? = null
 
     private val _gameState = MutableStateFlow(GameState()) // Privat & Muterbar (föränderlig): *Endast* VM:n kan ändra detta state.
     val gameState: StateFlow<GameState> = _gameState.asStateFlow() // Publik & Oföränderlig (read-only): Exponerar statet till Vyn (t.ex. GameScreen) för observation.
@@ -59,6 +64,28 @@ class GameVM(
                 Log.d("GameVM", "Settings updated: $gameSettings")
             }
         }
+    }
+
+    fun initializeTextToSpeech(context: Context) {
+        textToSpeech = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                textToSpeech?.language = Locale.US
+                Log.d("GameVM", "TextToSpeech initialized successfully")
+            } else {
+                Log.e("GameVM", "TextToSpeech initialization failed")
+            }
+        }
+    }
+
+    fun stopGame() {
+        gameJob?.cancel()
+        textToSpeech?.stop()
+        _gameState.value = _gameState.value.copy(isGameRunning = false)
+    }
+
+    private fun speakLetter(letter: String) {
+        textToSpeech?.speak(letter, TextToSpeech.QUEUE_FLUSH, null, null)
+        Log.d("GameVM", "Speaking: $letter")
     }
 
     fun setGameType(gameType: GameType) {
@@ -165,9 +192,9 @@ class GameVM(
     private fun startGameLoop() {
         val currentSettings = _settings.value
 
-        gameJob = viewModelScope.launch { // `viewModelScope` är bundet till VM:ns livscykel, inte Vyns. Denna coroutine överlever rotation.
+        gameJob = viewModelScope.launch {
             for (index in 0 until currentSettings.numberOfEvents) {
-                _gameState.value = _gameState.value.copy( // Uppdaterar spelets "state" med det nya eventet (vilken ruta/ljud som visas).
+                _gameState.value = _gameState.value.copy(
                     currentIndex = index,
                     eventValue = if (_gameState.value.gameType != GameType.Audio) {
                         visualSequence[index]
@@ -179,7 +206,15 @@ class GameVM(
                     lastResponseCorrect = null
                 )
 
-                delay(currentSettings.eventInterval) // Pausar coroutinen (spelloopen) asynkront enligt användarens inställning (t.ex. 2 sek).
+                // Spela ljud om det är Audio eller AudioVisual mode
+                if (_gameState.value.gameType == GameType.Audio ||
+                    _gameState.value.gameType == GameType.AudioVisual) {
+                    audioSequence[index].let { letter ->
+                        speakLetter(letter)
+                    }
+                }
+
+                delay(currentSettings.eventInterval)
             }
 
             endGame()
@@ -206,6 +241,11 @@ class GameVM(
         _gameState.value = GameState(gameType = _gameState.value.gameType)
     }
 
+    fun stopSpeaking() {
+        textToSpeech?.stop()
+    }
+
+
     fun updateSettings(newSettings: GameSettings) { // VM:n tar emot de nya inställningarna och startar en coroutine för att spara dem.
         viewModelScope.launch {
             // VM:n ber Repositoryn att *permanent* spara (persistera) inställningarna (till DataStore).
@@ -217,6 +257,7 @@ class GameVM(
     override fun onCleared() {
         super.onCleared() // Logik (Städning): När VM:n förstörs (appen stängs), avbryt spelloopen.
         gameJob?.cancel()
+        textToSpeech?.shutdown()
     }
 
     companion object {

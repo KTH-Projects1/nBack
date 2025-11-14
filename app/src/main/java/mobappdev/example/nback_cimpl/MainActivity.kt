@@ -18,6 +18,7 @@ import mobappdev.example.nback_cimpl.ui.screens.HomeScreen
 import mobappdev.example.nback_cimpl.ui.screens.SettingsScreen
 import mobappdev.example.nback_cimpl.ui.theme.NBack_CImplTheme
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameVM
+import androidx.compose.runtime.LaunchedEffect
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,6 +32,9 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     val gameViewModel: GameVM = viewModel(factory = GameVM.Factory)
                     // `viewModel()`-funktionen ser till att vi får *samma* VM-instans även efter skärmrotation.
+                    LaunchedEffect(Unit) {
+                        gameViewModel.initializeTextToSpeech(this@MainActivity)
+                    }
 
                     // Observe settings
                     val currentSettings by gameViewModel.settings.collectAsState()

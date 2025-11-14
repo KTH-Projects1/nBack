@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import mobappdev.example.nback_cimpl.data.GameType
 import mobappdev.example.nback_cimpl.ui.viewmodels.GameVM
+import androidx.compose.runtime.DisposableEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -31,6 +32,12 @@ fun GameScreen(
 
     val buttonScale = remember { Animatable(1f) }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            vm.stopGame()
+        }
+    }
+
     LaunchedEffect(gameState.lastResponseCorrect) { // Feedback 2 (Animation): Denna effekt körs *bara* när `lastResponseCorrect` ändras.
         gameState.lastResponseCorrect?.let {
             buttonScale.animateTo(1.2f, animationSpec = tween(100))
@@ -43,7 +50,10 @@ fun GameScreen(
             TopAppBar(
                 title = { Text("N-Back Game (N=${settings.nValue})") },
                 navigationIcon = {
-                    TextButton(onClick = onNavigateBack) {
+                    TextButton(onClick = {
+                        vm.stopGame()  // Stoppa spelet innan vi går tillbaka
+                        onNavigateBack()
+                    }) {
                         Text("← Back")
                     }
                 },
